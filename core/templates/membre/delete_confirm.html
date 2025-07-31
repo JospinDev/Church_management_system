@@ -1,0 +1,37 @@
+{% extends "core/base.html" %}
+
+{% block title %}Supprimer le membre{% endblock %}
+
+{% block body %}
+<main class="flex-1 overflow-y-auto p-4 bg-gray-50">
+    <div class="max-w-lg mx-auto">
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mx-auto mb-4">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">
+                    Confirmer la suppression
+                </h2>
+                <p class="text-gray-600 text-center mb-6">
+                    Êtes-vous sûr de vouloir supprimer le membre "{{ membre.get_nom_complet() }}" ?
+                    Cette action est irréversible.
+                </p>
+                <div class="flex justify-center space-x-4">
+                    <a href="{% url 'membre_list' %}" 
+                       class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">
+                        Annuler
+                    </a>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <button type="submit" 
+                                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                            Confirmer la suppression
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

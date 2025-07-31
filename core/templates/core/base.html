@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Système de Gestion d'Église</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        .sidebar.collapsed {
+            width: 70px;
+        }
+        .sidebar.collapsed .nav-text {
+            display: none;
+        }
+        .main-content {
+            transition: all 0.3s ease;
+        }
+        .sidebar.collapsed + .main-content {
+            margin-left: 70px;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .active-nav-item {
+            background-color: rgba(255,255,255,0.1);
+            border-left: 4px solid white;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+     <div id="dashboardPage">
+        <!-- Sidebar -->
+        <div class="sidebar bg-blue-800 text-white w-64 flex flex-col fixed h-full">
+            <!-- Logo -->
+            <div class="p-4 flex items-center justify-between border-b border-blue-700">
+                <div class="flex items-center">
+                    <i class="fas fa-church text-2xl mr-3"></i>
+                    <span class="text-xl font-bold nav-text">Église Bethel</span>
+                </div>
+                <button id="toggleSidebar" class="text-white focus:outline-none">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <!-- User Profile -->
+            <div class="p-4 flex items-center border-b border-blue-700">
+                <div class="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="ml-3 nav-text">
+                    <div class="font-medium">Pasteur Justin</div>
+                    <div class="text-xs text-blue-200">Administrateur</div>
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="flex-1 overflow-y-auto py-2">
+                <div class="px-2 space-y-1">
+                    <a href="{% url 'dashboard' %}" class="group flex items-center px-3 py-3 text-sm font-medium rounded-md text-white hover:bg-blue-700 active-nav-item">
+                        <i class="fas fa-tachometer-alt mr-3 flex-shrink-0"></i>
+                        <span class="nav-text">Tableau de bord</span>
+                    </a>
+                    
+                    <a href="{% url 'membre_list' %}" class="group flex items-center px-3 py-3 text-sm font-medium rounded-md text-blue-100 hover:bg-blue-700">
+                        <i class="fas fa-users mr-3 flex-shrink-0"></i>
+                        <span class="nav-text">Membres</span>
+                    </a>
+                    
+                    <a href="{% url 'couple_list' %}" class="group flex items-center px-3 py-3 text-sm font-medium rounded-md text-blue-100 hover:bg-blue-700">
+                        <i class="fas fa-heart mr-3 flex-shrink-0"></i>
+                        <span class="nav-text">Couples</span>
+                    </a>
+                    
+                    <a href="{% url 'programme_list' %}" class="group flex items-center px-3 py-3 text-sm font-medium rounded-md text-blue-100 hover:bg-blue-700">
+                        <i class="fas fa-calendar-alt mr-3 flex-shrink-0"></i>
+                        <span class="nav-text">Programmes Eglise</span>
+                    </a>
+                    <a href="{% url 'programme_mariage_list' %}" class="group flex items-center px-3 py-3 text-sm font-medium rounded-md text-blue-100 hover:bg-blue-700">
+                        <i class="fas fa-calendar-alt mr-3 flex-shrink-0"></i>
+                        <span class="nav-text">Programmes Marriage</span>
+                    </a>
+                    
+                    <a href="{% url 'transaction_list' %}" class="group flex items-center px-3 py-3 text-sm font-medium rounded-md text-blue-100 hover:bg-blue-700">
+                        <i class="fas fa-money-bill-wave mr-3 flex-shrink-0"></i>
+                        <span class="nav-text">Finances</span>
+                    </a>
+                    
+                    <a href="{% url 'groupe_list' %}" class="group flex items-center px-3 py-3 text-sm font-medium rounded-md text-blue-100 hover:bg-blue-700">
+                        <i class="fas fa-layer-group mr-3 flex-shrink-0"></i>
+                        <span class="nav-text">Groupes</span>
+                    </a>
+                    
+                    <a href="#" class="group flex items-center px-3 py-3 text-sm font-medium rounded-md text-blue-100 hover:bg-blue-700">
+                        <i class="fas fa-user-shield mr-3 flex-shrink-0"></i>
+                        <span class="nav-text">Permissions</span>
+                    </a>
+                    
+                    <a href="#" class="group flex items-center px-3 py-3 text-sm font-medium rounded-md text-blue-100 hover:bg-blue-700">
+                        <i class="fas fa-hand-holding-heart mr-3 flex-shrink-0"></i>
+                        <span class="nav-text">Dons</span>
+                    </a>
+                    
+                    <a href="#" class="group flex items-center px-3 py-3 text-sm font-medium rounded-md text-blue-100 hover:bg-blue-700">
+                        <i class="fas fa-cog mr-3 flex-shrink-0"></i>
+                        <span class="nav-text">Paramètres</span>
+                    </a>
+                </div>
+            </nav>
+            
+            <!-- Bottom Section -->
+            <div class="p-4 border-t border-blue-700">
+                <button onclick="window.location.href={% url 'logout'%}" class="w-full bg-blue-700 hover:bg-blue-600 text-white py-2 px-4 rounded flex items-center justify-center">
+                    <i class="fas fa-sign-out-alt mr-2 nav-text"></i>
+                    <span class="nav-text">Déconnexion</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content flex-1 flex flex-col overflow-hidden ml-64">
+            <!-- Top Navigation -->
+            <header class="bg-white shadow-sm">
+                <div class="px-4 py-3 flex justify-between items-center">
+                    <h1 class="text-xl font-semibold text-gray-800">{% block title %}Tableau de bord{% endblock title %}</h1>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <button class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                                <i class="fas fa-bell text-xl"></i>
+                                <span class="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <button class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                                <i class="fas fa-envelope text-xl"></i>
+                                <span class="absolute top-0 right-0 h-2 w-2 rounded-full bg-blue-500"></span>
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <button id="userMenuButton" class="flex items-center text-gray-700 hover:text-gray-900 focus:outline-none">
+                                <span class="mr-2 hidden md:inline">Pasteur Justin</span>
+                                <div class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            {% block body %}
+
+            {% endblock body %}
+        </div>
+<script>
+        // Dashboard functionality
+        document.getElementById('toggleSidebar').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('collapsed');
+            document.querySelector('.main-content').classList.toggle('ml-64');
+            document.querySelector('.main-content').classList.toggle('ml-16');
+        });
+
+        // Highlight active nav item
+        const navItems = document.querySelectorAll('nav a');
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                navItems.forEach(i => i.classList.remove('active-nav-item', 'text-white'));
+                navItems.forEach(i => i.classList.add('text-blue-100'));
+                this.classList.add('active-nav-item', 'text-white');
+                this.classList.remove('text-blue-100');
+            });
+        });
+
+        // Mobile menu toggle (for smaller screens)
+        function checkScreenSize() {
+            if (window.innerWidth < 768) {
+                document.querySelector('.sidebar').classList.add('collapsed');
+                document.querySelector('.main-content').classList.remove('ml-64');
+                document.querySelector('.main-content').classList.add('ml-16');
+            } else {
+                document.querySelector('.sidebar').classList.remove('collapsed');
+                document.querySelector('.main-content').classList.add('ml-64');
+                document.querySelector('.main-content').classList.remove('ml-16');
+            }
+        }
+
+        // Check on load and resize
+        window.addEventListener('load', checkScreenSize);
+        window.addEventListener('resize', checkScreenSize);
+    </script>
+
+    
+
+    </body>
+</html>

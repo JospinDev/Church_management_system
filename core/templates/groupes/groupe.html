@@ -1,0 +1,249 @@
+{% extends "core/base.html" %}
+
+{% block title %}Groupes{% endblock title %}
+
+{% block body %}
+<main class="flex-1 overflow-y-auto p-4 bg-gray-50">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Gestion des Groupes</h2>
+            <p class="text-gray-600 mt-1">{{ groupes.count }} groupe(s) créé(s)</p>
+        </div>
+        <div class="flex space-x-3">
+            <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center">
+                <i class="fas fa-plus mr-2"></i>
+                Nouveau Groupe
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistiques rapides -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-indigo-100 text-indigo-600 mr-4">
+                    <i class="fas fa-layer-group text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Total Groupes</p>
+                    <h3 class="text-2xl font-bold">{{ groupes.count }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+                    <i class="fas fa-users text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Total Membres</p>
+                    <h3 class="text-2xl font-bold">
+                        {% for groupe in groupes %}
+                            {% if forloop.first %}{{ groupe.nombre_membres|add:"0" }}{% else %}{{ groupe.nombre_membres|add:forloop.counter0 }}{% endif %}
+                        {% empty %}
+                            0
+                        {% endfor %}
+                    </h3>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
+                    <i class="fas fa-chart-line text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Moyenne par Groupe</p>
+                    <h3 class="text-2xl font-bold">
+                        {% if groupes.count > 0 %}
+                            {% widthratio groupes.count 1 groupes.count %}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </h3>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
+                    <i class="fas fa-star text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Groupe le plus actif</p>
+                    <h3 class="text-lg font-bold">
+                        {% if groupes %}
+                            {{ groupes.first.nom_groupe|truncatechars:15 }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres et recherche -->
+    <div class="bg-white rounded-lg shadow mb-6 p-4">
+        <form method="GET" class="flex items-end space-x-4">
+            <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Recherche</label>
+                <input type="text" name="search" value="{{ search }}" 
+                       placeholder="Nom du groupe, description..." 
+                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div class="flex space-x-2">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md">
+                    <i class="fas fa-search mr-2"></i>Rechercher
+                </button>
+                <a href="{% url 'groupe_list' %}" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md">
+                    <i class="fas fa-times mr-2"></i>Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Liste des groupes en cartes -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for groupe in groupes %}
+        <div class="bg-white rounded-lg shadow hover:shadow-lg transition duration-300 overflow-hidden">
+            <div class="p-6">
+                <!-- Header du groupe -->
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center">
+                        <div class="h-12 w-12 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-users text-indigo-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">{{ groupe.nom_groupe }}</h3>
+                            <p class="text-sm text-gray-500">{{ groupe.nombre_membres }} membre(s)</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="text-gray-400 hover:text-indigo-600">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="text-gray-400 hover:text-red-600">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                {% if groupe.description %}
+                    <p class="text-gray-600 text-sm mb-4">{{ groupe.description|truncatechars:100 }}</p>
+                {% else %}
+                    <p class="text-gray-400 text-sm mb-4 italic">Aucune description</p>
+                {% endif %}
+
+                <!-- Statistiques du groupe -->
+                <div class="bg-gray-50 rounded-lg p-3 mb-4">
+                    <div class="flex justify-between items-center">
+                        <div class="text-center">
+                            <div class="text-lg font-bold text-indigo-600">{{ groupe.nombre_membres }}</div>
+                            <div class="text-xs text-gray-500">Membres</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-lg font-bold text-green-600">
+                                {% if groupe.nombre_membres > 0 %}Actif{% else %}Inactif{% endif %}
+                            </div>
+                            <div class="text-xs text-gray-500">Statut</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-lg font-bold text-purple-600">{{ groupe.created_at|date:"M" }}</div>
+                            <div class="text-xs text-gray-500">Créé en</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aperçu des membres (icônes) -->
+                {% if groupe.nombre_membres > 0 %}
+                <div class="flex items-center mb-4">
+                    <div class="flex -space-x-2 overflow-hidden">
+                        {% for i in "12345"|make_list %}
+                            {% if forloop.counter <= groupe.nombre_membres %}
+                            <div class="inline-block h-8 w-8 rounded-full bg-gray-300 ring-2 ring-white flex items-center justify-center">
+                                <i class="fas fa-user text-gray-600 text-xs"></i>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                        {% if groupe.nombre_membres > 5 %}
+                        <div class="inline-block h-8 w-8 rounded-full bg-gray-500 ring-2 ring-white flex items-center justify-center">
+                            <span class="text-white text-xs font-bold">+{{ groupe.nombre_membres|add:"-5" }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <span class="ml-3 text-sm text-gray-500">membres actifs</span>
+                </div>
+                {% endif %}
+
+                <!-- Actions -->
+                <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+                    <div class="text-xs text-gray-500">
+                        Créé le {{ groupe.created_at|date:"d/m/Y" }}
+                    </div>
+                    <div class="flex space-x-2">
+                        <a href="{% url 'groupe_detail_view' groupe.pk %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm flex items-center">
+                            <i class="fas fa-eye mr-1"></i>
+                            Détails
+                        </a>
+                        <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm flex items-center">
+                            <i class="fas fa-user-plus mr-1"></i>
+                            Ajouter
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full bg-white rounded-lg shadow p-12 text-center">
+            <i class="fas fa-users-slash text-6xl text-gray-300 mb-4"></i>
+            <h3 class="text-xl font-semibold text-gray-700 mb-2">Aucun groupe trouvé</h3>
+            <p class="text-gray-500 mb-4">Commencez par créer votre premier groupe pour organiser vos membres.</p>
+            <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+                <i class="fas fa-plus mr-2"></i>
+                Créer un groupe
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Top groupes par nombre de membres -->
+    {% if groupes %}
+    <div class="mt-8">
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">Top 5 - Groupes les plus actifs</h3>
+            </div>
+            <div class="divide-y divide-gray-200">
+                {% for groupe in groupes|slice:":5" %}
+                <div class="p-4 hover:bg-gray-50 transition duration-150">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-4">
+                                <i class="fas fa-users text-indigo-600"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900">{{ groupe.nom_groupe }}</h4>
+                                <p class="text-sm text-gray-500">{{ groupe.description|truncatechars:60 }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="text-center">
+                                <div class="text-lg font-bold text-indigo-600">{{ groupe.nombre_membres }}</div>
+                                <div class="text-xs text-gray-500">membres</div>
+                            </div>
+                            <a href="{% url 'groupe_detail_view' groupe.pk %}" class="text-indigo-600 hover:text-indigo-900">
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</main>
+{% endblock body %}

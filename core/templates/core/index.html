@@ -1,0 +1,285 @@
+{% extends "core/base.html" %}
+            <!-- Main Content Area -->
+        {% block body %}
+            <main class="flex-1 overflow-y-auto p-4 bg-gray-50">
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="dashboard-card bg-white rounded-lg shadow p-6 transition duration-300">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
+                                <i class="fas fa-users text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Total Membres</p>
+                                <h3 class="text-2xl font-bold">{{total_membres}}</h3>
+                                <p class="text-green-500 text-xs mt-1"><i class="fas fa-arrow-up"></i> 5.2% depuis le mois dernier</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card bg-white rounded-lg shadow p-6 transition duration-300">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+                                <i class="fas fa-heart text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Couples Mariés</p>
+                                <h3 class="text-2xl font-bold">{{total_couples}}</h3>
+                                <p class="text-green-500 text-xs mt-1"><i class="fas fa-arrow-up"></i> 2.1% depuis le mois dernier</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card bg-white rounded-lg shadow p-6 transition duration-300">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
+                                <i class="fas fa-calendar-alt text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Événements ce mois</p>
+                                <h3 class="text-2xl font-bold">18</h3>
+                                <p class="text-red-500 text-xs mt-1"><i class="fas fa-arrow-down"></i> 1.3% depuis le mois dernier</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card bg-white rounded-lg shadow p-6 transition duration-300">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-yellow-100 text-yellow-600 mr-4">
+                                <i class="fas fa-money-bill-wave text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Offrandes (Mois)</p>
+                                <h3 class="text-2xl font-bold">$24,750</h3>
+                                <p class="text-green-500 text-xs mt-1"><i class="fas fa-arrow-up"></i> 8.7% depuis le mois dernier</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Activities and Calendar -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <!-- Recent Activities -->
+                    <div class="lg:col-span-2 bg-white rounded-lg shadow overflow-hidden">
+                        <div class="p-4 border-b border-gray-200">
+                            <h2 class="text-lg font-semibold text-gray-800">Activités Récentes</h2>
+                        </div>
+                        <div class="divide-y divide-gray-200">
+                            <div class="p-4 hover:bg-gray-50 transition duration-150">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                        <i class="fas fa-user-plus"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-900">Nouveau membre enregistré</p>
+                                        <p class="text-sm text-gray-500">Marie Dupont a rejoint l'église aujourd'hui.</p>
+                                        <p class="text-xs text-gray-400 mt-1">Il y a 2 heures</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 hover:bg-gray-50 transition duration-150">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                                        <i class="fas fa-heart"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-900">Nouveau couple enregistré</p>
+                                        <p class="text-sm text-gray-500">Jean et Sophie Martin ont été enregistrés comme couple marié.</p>
+                                        <p class="text-xs text-gray-400 mt-1">Il y a 5 heures</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 hover:bg-gray-50 transition duration-150">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+                                        <i class="fas fa-calendar-check"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-900">Nouvel événement créé</p>
+                                        <p class="text-sm text-gray-500">Culte dominical du 15 octobre a été programmé.</p>
+                                        <p class="text-xs text-gray-400 mt-1">Il y a 1 jour</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 hover:bg-gray-50 transition duration-150">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600">
+                                        <i class="fas fa-donate"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-900">Don reçu</p>
+                                        <p class="text-sm text-gray-500">Un don de $500 a été reçu de la part de Pierre Lambert.</p>
+                                        <p class="text-xs text-gray-400 mt-1">Il y a 2 jours</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 border-t border-gray-200 text-center">
+                            <a href="#" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Voir toutes les activités</a>
+                        </div>
+                    </div>
+                    
+                    <!-- Upcoming Events -->
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <div class="p-4 border-b border-gray-200">
+                            <h2 class="text-lg font-semibold text-gray-800">Événements à venir</h2>
+                        </div>
+                        <div class="divide-y divide-gray-200">
+                            <div class="p-4 hover:bg-gray-50 transition duration-150">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0 bg-blue-100 text-blue-800 rounded-lg p-2 text-center w-12">
+                                        <div class="text-xs font-bold">OCT</div>
+                                        <div class="text-lg font-bold">15</div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-900">Culte Dominical</p>
+                                        <p class="text-sm text-gray-500">09:00 - 11:30 • Salle principale</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 hover:bg-gray-50 transition duration-150">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0 bg-green-100 text-green-800 rounded-lg p-2 text-center w-12">
+                                        <div class="text-xs font-bold">OCT</div>
+                                        <div class="text-lg font-bold">17</div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-900">Réunion de prière</p>
+                                        <p class="text-sm text-gray-500">19:00 - 20:30 • Chapelle</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 hover:bg-gray-50 transition duration-150">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0 bg-purple-100 text-purple-800 rounded-lg p-2 text-center w-12">
+                                        <div class="text-xs font-bold">OCT</div>
+                                        <div class="text-lg font-bold">20</div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-900">Étude biblique</p>
+                                        <p class="text-sm text-gray-500">18:30 - 20:00 • Salle 2</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 hover:bg-gray-50 transition duration-150">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0 bg-yellow-100 text-yellow-800 rounded-lg p-2 text-center w-12">
+                                        <div class="text-xs font-bold">OCT</div>
+                                        <div class="text-lg font-bold">22</div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-900">Mariage - Jean & Sophie</p>
+                                        <p class="text-sm text-gray-500">14:00 - 16:00 • Église</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 border-t border-gray-200 text-center">
+                            <a href="#" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Voir le calendrier complet</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Financial Overview and Recent Members -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Financial Overview -->
+                    <div class="lg:col-span-2 bg-white rounded-lg shadow overflow-hidden">
+                        <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                            <h2 class="text-lg font-semibold text-gray-800">Aperçu Financier</h2>
+                            <select class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option>Ce mois-ci</option>
+                                <option>Le mois dernier</option>
+                                <option>Cette année</option>
+                            </select>
+                        </div>
+                        <div class="p-4">
+                            <div class="h-64">
+                                <!-- Chart placeholder - in a real app this would be a charting library -->
+                                <div class="bg-gray-100 rounded-lg h-full flex items-center justify-center text-gray-400">
+                                    <div class="text-center">
+                                        <i class="fas fa-chart-line text-4xl mb-2"></i>
+                                        <p>Graphique des finances</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4 mt-4">
+                                <div class="text-center">
+                                    <p class="text-sm text-gray-500">Offrandes</p>
+                                    <p class="text-lg font-semibold">$24,750</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-sm text-gray-500">Dépenses</p>
+                                    <p class="text-lg font-semibold">$18,320</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-sm text-gray-500">Solde</p>
+                                    <p class="text-lg font-semibold text-green-600">$6,430</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Members -->
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <div class="p-4 border-b border-gray-200">
+                            <h2 class="text-lg font-semibold text-gray-800">Nouveaux Membres</h2>
+                        </div>
+                        <div class="divide-y divide-gray-200">
+                            <div class="p-4 hover:bg-gray-50 transition duration-150">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-900">Marie Dupont</p>
+                                        <p class="text-sm text-gray-500">Baptisée dans cette église</p>
+                                        <p class="text-xs text-gray-400 mt-1">Ajouté aujourd'hui</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 hover:bg-gray-50 transition duration-150">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-900">Luc Bernard</p>
+                                        <p class="text-sm text-gray-500">Baptisé dans une autre église</p>
+                                        <p class="text-xs text-gray-400 mt-1">Ajouté hier</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 hover:bg-gray-50 transition duration-150">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-900">Sophie Martin</p>
+                                        <p class="text-sm text-gray-500">Pas encore baptisée</p>
+                                        <p class="text-xs text-gray-400 mt-1">Ajouté il y a 2 jours</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 hover:bg-gray-50 transition duration-150">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-900">Thomas Leroy</p>
+                                        <p class="text-sm text-gray-500">Diacre</p>
+                                        <p class="text-xs text-gray-400 mt-1">Ajouté il y a 3 jours</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 border-t border-gray-200 text-center">
+                            <a href="#" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Voir tous les membres</a>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+{% endblock body %}

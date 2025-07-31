@@ -1,0 +1,131 @@
+{% extends "core/base.html" %}
+
+{% block title %}{% if couple %}Modifier{% else %}Nouveau{% endif %} Couple{% endblock title %}
+
+{% block body %}
+<main class="flex-1 overflow-y-auto p-4 bg-gray-50">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center">
+            <a href="{% url 'couple_list' %}" class="text-blue-600 hover:text-blue-800 mr-4">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </a>
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">
+                    {% if couple %}Modifier le couple{% else %}Nouveau couple{% endif %}
+                </h2>
+                <p class="text-gray-600">
+                    {% if couple %}Mettre à jour les informations du couple{% else %}Enregistrer un nouveau couple marié{% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulaire -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="p-6">
+            <form method="POST" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="mari" class="block text-sm font-medium text-gray-700 mb-2">Mari *</label>
+                        <select id="mari" name="mari" required
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Sélectionner le mari</option>
+                            {% for membre in membres_hommes %}
+                                <option value="{{ membre.id }}" {% if form.mari.value == membre.id %}selected{% endif %}>
+                                    {{ membre.nom_complet }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        {% if form.mari.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.mari.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="femme" class="block text-sm font-medium text-gray-700 mb-2">Femme *</label>
+                        <select id="femme" name="femme" required
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Sélectionner la femme</option>
+                            {% for membre in membres_femmes %}
+                                <option value="{{ membre.id }}" {% if form.femme.value == membre.id %}selected{% endif %}>
+                                    {{ membre.nom_complet }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        {% if form.femme.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.femme.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                    <label for="statut_couple" class="block text-sm font-medium text-gray-700 mb-2">Statut *</label>
+                    <select id="statut_couple" name="statut_couple" required class="w-full border border-gray-300 rounded-md px-3 py-2">
+                        <option value="">Sélectionner le statut</option>
+                        {% for value, label in statut_choices %}
+                            <option value="{{ value }}" {% if form.statut_couple.value == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                    <div>
+                        <label for="date_mariage" class="block text-sm font-medium text-gray-700 mb-2">Date de mariage *</label>
+                        <input type="date" id="date_mariage" name="date_mariage" 
+                               value="{{ form.date_mariage.value|date:'Y-m-d'|default:'' }}" required
+                               class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        {% if form.date_mariage.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.date_mariage.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Boutons d'action -->
+                <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                    <a href="{% url 'couple_list' %}" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-md">
+                        Annuler
+                    </a>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md">
+                        <i class="fas fa-save mr-2"></i>
+                        {% if couple %}Mettre à jour{% else %}Enregistrer{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+<script>
+    // Empêcher qu'une personne soit sélectionnée comme mari et femme en même temps
+    document.getElementById('mari').addEventListener('change', function() {
+        const mariId = this.value;
+        const femmeSelect = document.getElementById('femme');
+        const femmeOptions = femmeSelect.querySelectorAll('option');
+        
+        femmeOptions.forEach(option => {
+            if (option.value === mariId && mariId !== '') {
+                option.disabled = true;
+            } else {
+                option.disabled = false;
+            }
+        });
+    });
+
+    document.getElementById('femme').addEventListener('change', function() {
+        const femmeId = this.value;
+        const mariSelect = document.getElementById('mari');
+        const mariOptions = mariSelect.querySelectorAll('option');
+        
+        mariOptions.forEach(option => {
+            if (option.value === femmeId && femmeId !== '') {
+                option.disabled = true;
+            } else {
+                option.disabled = false;
+            }
+        });
+    });
+</script>
+{% endblock body %}

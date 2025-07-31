@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Système de Gestion d'Église</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="bg-blue-800 py-4 px-6">
+                <h1 class="text-2xl font-bold text-white text-center">
+                    <i class="fas fa-church mr-2"></i>Demande d'accès
+                </h1>
+            </div>
+            <div class="p-6">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div id="message-box"
+                            class="mb-4 px-4 py-2 rounded text-white 
+                                    {% if message.tags == 'success' %}bg-green-500
+                                    {% elif message.tags == 'error' %}bg-red-500
+                                    {% elif message.tags == 'warning' %}bg-yellow-500 text-black
+                                    {% else %}bg-blue-500{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+
+                    <script>
+                        // Rediriger après 3 secondes si message de succès
+                        {% for message in messages %}
+                            {% if message.tags == 'success' %}
+                                setTimeout(function () {
+                                    window.location.href = "{% url 'login' %}";
+                                }, 3000); // 3 secondes
+                            {% endif %}
+                        {% endfor %}
+                    </script>
+                {% endif %}
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label for="requestName" class="block text-gray-700 text-sm font-medium mb-2">Nom complet</label>
+                        <input type="text" id="requestName" name="name" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="requestEmail" class="block text-gray-700 text-sm font-medium mb-2">Email</label>
+                        <input type="email" id="requestEmail" name="email" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="requestRole" class="block text-gray-700 text-sm font-medium mb-2">Rôle souhaité</label>
+                        <select id="requestRole" name="role" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Sélectionner un rôle</option>
+                            <option value="Membre Standard">Membre Standard</option>
+                            <option value="Responsable des Membres">Responsable des Membres</option>
+                            <option value="Trésorier">Trésorier</option>
+                            <option value="Coordinateur de Programme">Coordinateur de Programme</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="requestMessage" class="block text-gray-700 text-sm font-medium mb-2">Message (optionnel)</label>
+                        <textarea id="requestMessage" name="message" rows="3"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div class="flex justify-between">
+                        <a href="{% url 'login' %}" 
+                            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            Annuler
+                        </a>
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            Envoyer la demande
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        
+    </script>
+</body>
+</html>
