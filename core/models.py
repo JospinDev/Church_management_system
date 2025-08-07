@@ -3,6 +3,9 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from decimal import Decimal
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from datetime import timedelta,datetime
 
 class Membre(models.Model):
     SEXE_CHOICES = [
@@ -18,6 +21,7 @@ class Membre(models.Model):
     nom = models.CharField(max_length=100)
     prenom = models.CharField(max_length=100)
     date_naissance = models.DateField()
+    is_active = models.BooleanField(default=True)
     adresse = models.TextField()
     telephone = models.CharField(
         max_length=20,
@@ -134,6 +138,7 @@ class Couple(models.Model):
         on_delete=models.CASCADE, 
         related_name='couples_femme'
     )
+    is_active = models.BooleanField(default=True)
     statut_couple = models.CharField(max_length=10, choices=STATUT_CHOICES)
     date_mariage = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -146,6 +151,25 @@ class Couple(models.Model):
     
     def __str__(self):
         return f"{self.membre_mari.nom_complet} & {self.membre_femme.nom_complet}"
+    
+    def clean(self):
+        
+        # Si le couple existe déjà (modification)
+        if self.pk:
+            # Vérifie s'il y a des programmes actifs
+            programmes_actifs = self.programmes_mariage.filter(
+                statut__in=['planifie', 'en_cours']
+            ).exists()
+            
+            if programmes_actifs:
+                raise ValidationError(
+                    "Impossible de supprimer ce couple car il a des programmes de mariage actifs. "
+                    "Veuillez d'abord annuler ou terminer tous les programmes associés."
+                )
+    
+    def delete(self, *args, **kwargs):
+        self.clean()
+        super().delete(*args, **kwargs)
 
 
 class ProgrammeMariage(models.Model):
@@ -173,6 +197,10 @@ class ProgrammeMariage(models.Model):
     
     def __str__(self):
         return f"{self.titre} - {self.couple}"
+    
+    @property
+    def is_actif(self):
+        return self.statut in ['planifie', 'en_cours']
 
 
 class ProgrammeEglise(models.Model):
@@ -185,15 +213,93 @@ class ProgrammeEglise(models.Model):
         ('jeunesse', 'Jeunesse'),
         ('enfants', 'Enfants'),
     ]
+    RECURRENCE_CHOICES = [
+        ('none', 'Pas de répétition'),
+        ('weekly', 'Hebdomadaire'),
+        ('monthly', 'Mensuel'),
+    ]
     
     titre = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
-    date_debut = models.DateTimeField()
-    date_fin = models.DateTimeField()
+    date_debut = models.DateField(null=True, blank=True)
+    heure_debut = models.TimeField(null=True, blank=True)
+    
+    date_fin = models.DateField(null=True, blank=True)
+    heure_fin = models.TimeField(null=True, blank=True)
     lieu = models.CharField(max_length=200)
     categorie = models.CharField(max_length=20, choices=CATEGORIE_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    recurrence = models.CharField(
+        max_length=10,
+        choices=RECURRENCE_CHOICES,
+        default='none',
+        verbose_name="Récurrence"
+    )
+    
+    
+
+    @property
+    def next_date(self):
+        """Calcule dynamiquement la prochaine date du programme."""
+        if not self.date_debut:
+            return None
+
+        today = timezone.localdate()
+
+        # Si aucune récurrence
+        if self.recurrence == 'none':
+            return self.date_debut
+
+        # Si récurrence hebdomadaire
+        if self.recurrence == 'weekly':
+            original_weekday = self.date_debut.weekday()
+            days_ahead = (original_weekday - today.weekday()) % 7
+            if days_ahead == 0 and self.date_debut < today:
+                days_ahead = 7
+            next_date = today + timedelta(days=days_ahead)
+
+        # Si récurrence mensuelle
+        elif self.recurrence == 'monthly':
+            next_date = self.date_debut
+            while next_date <= today:
+                month = next_date.month + 1
+                year = next_date.year
+                if month > 12:
+                    month = 1
+                    year += 1
+                next_date = next_date.replace(year=year, month=month)
+
+        else:
+            return self.date_debut
+
+        # Si on a une heure, on retourne un datetime complet, sinon juste la date
+        if self.heure_debut:
+            return timezone.make_aware(
+                datetime.combine(next_date, self.heure_debut)
+            )
+        return next_date
+
+    
+    @property
+    def is_next_occurrence(self):
+        """Vérifie si c'est la prochaine occurrence."""
+        next_date = self.next_date
+        if not next_date:
+            return False
+        
+        now = timezone.localtime(timezone.now())
+        return (next_date > now and 
+                next_date == self.next_date)
+
+    def clean(self):
+        """Validation personnalisée."""
+        super().clean()
+        if self.date_debut:
+            # Définir automatiquement la récurrence si c'est un jeudi
+            if self.date_debut.weekday() == 3:  # 3 = Jeudi
+                self.recurrence = 'weekly'
     
     class Meta:
         verbose_name = "Programme d'Église"
@@ -208,6 +314,7 @@ class Groupe(models.Model):
     nom_groupe = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
     membres = models.ManyToManyField(Membre, through='MembreGroupe', related_name='groupes')
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

@@ -36,7 +36,11 @@ urlpatterns = [
     
     # Programmes d'église
     path('programmes/', views.programme_eglise_list_view, name='programme_list'),
+    path('programmes/calendrier/', views.programme_eglise_calendar_view, name='programme_calendar'),
+    path('programmes/creer/', views.programme_eglise_create_view, name='programme_create'),
     path('programmes/<int:pk>/', views.programme_eglise_detail_view, name='programme_detail'),
+    path('programmes/<int:pk>/modifier/', views.programme_eglise_update_view, name='programme_update'),
+    path('programmes/<int:pk>/supprimer/', views.programme_eglise_delete_view, name='programme_delete'),
 
     # Programmes de marriage
     path('programmes-mariage/', views.programme_mariage_list_view, name='programme_mariage_list'),

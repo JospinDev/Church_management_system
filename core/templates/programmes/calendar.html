@@ -1,0 +1,454 @@
+{% extends "core/base.html" %}
+{% load custom_filters %}
+
+{% block title %}Calendrier des programmes{% endblock %}
+
+{% block extra_head %}
+<!-- FullCalendar CSS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+
+<style>
+    /* Styles responsives pour le calendrier */
+    .fc {
+        max-width: 100%;
+        height: auto !important;
+    }
+    
+    .fc .fc-toolbar {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .fc-event {
+        cursor: pointer;
+        transition: opacity 0.2s;
+    }
+    
+    .fc-event:hover {
+        opacity: 0.9;
+    }
+    
+    /* Styles pour les cartes de statistiques cliquables */
+    .stat-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        shadow: 0 8px 16px rgba(0,0,0,0.1);
+        border-color: #e5e7eb;
+    }
+    
+    .stat-card.active {
+        border-color: #9333ea;
+        box-shadow: 0 0 0 1px #9333ea;
+    }
+    
+    @media (min-width: 768px) {
+        .fc .fc-toolbar {
+            flex-direction: row;
+        }
+    }
+    
+    .fc .fc-toolbar-title {
+        font-size: 1.2rem;
+    }
+    
+    .fc .fc-button {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.875rem;
+    }
+    
+    /* Responsive pour les événements */
+    .fc-event {
+        margin: 2px 0;
+        padding: 2px;
+        font-size: 0.875rem;
+    }
+    
+    /* Ajustements pour mobile */
+    @media (max-width: 640px) {
+        .fc .fc-toolbar-title {
+            font-size: 1rem;
+        }
+        
+        .fc .fc-button {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.75rem;
+        }
+        
+        .fc-event {
+            font-size: 0.75rem;
+        }
+        
+        .fc .fc-view-harness {
+            height: calc(100vh - 200px) !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<main class="flex-1 overflow-y-auto p-2 sm:p-4 bg-gray-50">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div class="flex items-center w-full sm:w-auto">
+            <a href="{% url 'programme_list' %}" 
+               class="text-purple-600 hover:text-purple-800 mr-4">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </a>
+            <div>
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Calendrier des programmes</h2>
+                <p class="text-sm sm:text-base text-gray-600 mt-1">Vue calendrier de tous les programmes</p>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+            <a href="{% url 'programme_create' %}" 
+               class="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center justify-center">
+                <i class="fas fa-plus mr-2"></i>
+                Nouveau Programme
+            </a>
+            
+            <!-- Filtres si nécessaire -->
+            <div class="w-full sm:w-auto">
+                <select id="filterCategory" 
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <option value="">Toutes les catégories</option>
+                    {% for value, label in categorie_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Bouton pour réinitialiser le filtre -->
+            <button id="resetFilter" 
+                    class="w-full sm:w-auto bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center justify-center">
+                <i class="fas fa-refresh mr-2"></i>
+                Tout voir
+            </button>
+        </div>
+    </div>
+
+    <!-- Cartes de statistiques cliquables -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        {% for value, label in categorie_choices %}
+        <div class="stat-card bg-white rounded-lg shadow p-4 {% if categorie == value %}active{% endif %}" 
+             data-category="{{ value }}" 
+             onclick="filterByCategory('{{ value }}')">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full 
+                    {% if value == 'culte' %}bg-purple-100 text-purple-600
+                    {% elif value == 'reunion_priere' %}bg-green-100 text-green-600
+                    {% elif value == 'etude_biblique' %}bg-yellow-100 text-yellow-600
+                    {% elif value == 'evenement_special' %}bg-red-100 text-red-600
+                    {% elif value == 'formation' %}bg-blue-100 text-blue-600
+                    {% elif value == 'jeunesse' %}bg-pink-100 text-pink-600
+                    {% else %}bg-cyan-100 text-cyan-600{% endif %} mr-4">
+                    <i class="fas fa-{% if value == 'culte' %}church
+                              {% elif value == 'reunion_priere' %}pray
+                              {% elif value == 'etude_biblique' %}book-open
+                              {% elif value == 'evenement_special' %}star
+                              {% elif value == 'formation' %}graduation-cap
+                              {% elif value == 'jeunesse' %}users
+                              {% else %}child{% endif %} text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">{{ label }}</p>
+                    <p class="text-xl font-bold">{{ stats|get_item:value }}</p>
+                </div>
+            </div>
+            <!-- Indicateur de filtre actif -->
+            {% if categorie == value %}
+            <div class="mt-2 text-xs text-purple-600 font-medium">
+                <i class="fas fa-filter mr-1"></i>
+                Filtre actif
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Calendrier -->
+    <div class="bg-white rounded-lg shadow-lg p-4">
+        <div id="calendar"></div>
+    </div>
+
+    <!-- Modal pour les détails du programme -->
+    <div id="programmeModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-md bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-900" id="modalTitle"></h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-600 w-1/4">Catégorie</td>
+                            <td class="px-6 py-4 whitespace-nowrap" id="modalCategorie"></td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-600">Date de début</td>
+                            <td class="px-6 py-4 whitespace-nowrap" id="modalDateDebut"></td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-600">Date de fin</td>
+                            <td class="px-6 py-4 whitespace-nowrap" id="modalDateFin"></td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-600">Lieu</td>
+                            <td class="px-6 py-4 whitespace-nowrap" id="modalLieu"></td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-600">Description</td>
+                            <td class="px-6 py-4" id="modalDescription"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex justify-end mt-4 space-x-3">
+                <a id="modalEditLink" href="#" 
+                   class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-edit mr-2"></i>
+                    Modifier
+                </a>
+                <button onclick="closeModal()" 
+                        class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Scripts en bas de page pour assurer le bon chargement -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script src="https://unpkg.com/@popperjs/core@2"></script>
+<script src="https://unpkg.com/tippy.js@6"></script>
+
+<script>
+// Attendre que tous les scripts soient chargés
+window.addEventListener('load', function() {
+    console.log('Page loaded, FullCalendar available:', typeof FullCalendar !== 'undefined');
+    
+    if (typeof FullCalendar === 'undefined') {
+        console.error('FullCalendar is not loaded!');
+        return;
+    }
+    
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
+        locale: 'fr',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,listWeek'
+        },
+        events: {{ events|safe }},
+        // Options responsives
+        height: 'auto',
+        contentHeight: 'auto',
+        aspectRatio: 1.8,
+        handleWindowResize: true,
+        windowResizeDelay: 200,
+        
+        // Personnalisation des événements
+        eventDidMount: function(info) {
+            const event = info.event;
+            const props = event.extendedProps;
+            
+            if (typeof tippy !== 'undefined') {
+                tippy(info.el, {
+                    content: `
+                        <div class="p-2">
+                            <div class="font-bold">${event.title}</div>
+                            <div class="text-sm">${props.lieu || ''}</div>
+                            ${props.description ? `<div class="text-sm mt-1">${props.description}</div>` : ''}
+                        </div>
+                    `,
+                    allowHTML: true,
+                    theme: 'light',
+                    placement: 'top',
+                });
+            }
+        },
+        
+        eventContent: function(arg) {
+            return {
+                html: `
+                    <div class="fc-event-main-frame p-1">
+                        <div class="fc-event-title-container">
+                            <div class="fc-event-title font-medium">${arg.event.title}</div>
+                            <div class="text-xs opacity-75">${arg.event.extendedProps.lieu || ''}</div>
+                        </div>
+                    </div>
+                `
+            };
+        },
+        
+        // Gestion du clic sur un événement
+        eventClick: function(info) {
+            const event = info.event;
+            const props = event.extendedProps;
+            
+            console.log('Event clicked:', event);
+            console.log('Extended props:', props);
+            
+            // Vérification des données essentielles
+            if (!event.title) {
+                console.warn('Titre manquant pour l\'événement');
+                return false;
+            }
+            
+            // Formatter les dates avec vérifications
+            let dateDebutText = 'Date non disponible';
+            let dateFinText = 'Date non disponible';
+            
+            if (event.start) {
+                const dateDebut = new Date(event.start);
+                const options = { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                };
+                dateDebutText = dateDebut.toLocaleDateString('fr-FR', options);
+            }
+            
+            if (event.end) {
+                const dateFin = new Date(event.end);
+                const options = { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                };
+                dateFinText = dateFin.toLocaleDateString('fr-FR', options);
+            }
+
+            // Mise à jour du contenu du modal avec vérifications
+            document.getElementById('modalTitle').textContent = event.title;
+            
+            // Catégorie avec fallback
+            const categorieElement = document.getElementById('modalCategorie');
+            if (props && props.categorie) {
+                categorieElement.innerHTML = `
+                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full 
+                        ${getCategorieClasses(props.categorie)}">
+                        ${getCategorieLabel(props.categorie)}
+                    </span>`;
+            } else {
+                categorieElement.textContent = 'Catégorie non définie';
+            }
+            
+            document.getElementById('modalDateDebut').textContent = dateDebutText;
+            document.getElementById('modalDateFin').textContent = dateFinText;
+            document.getElementById('modalLieu').textContent = (props && props.lieu) ? props.lieu : 'Lieu non précisé';
+            document.getElementById('modalDescription').textContent = (props && props.description) ? props.description : 'Aucune description';
+            
+            // Mettre à jour le lien de modification
+            const editLink = document.getElementById('modalEditLink');
+            if (props && props.editUrl) {
+                editLink.href = props.editUrl;
+                editLink.style.display = 'inline-flex';
+            } else {
+                editLink.style.display = 'none';
+                console.warn('URL d\'édition manquante');
+            }
+            
+            // Afficher le modal
+            document.getElementById('programmeModal').classList.remove('hidden');
+            
+            return false; // Empêcher la navigation par défaut
+        }
+    });
+    
+    // Gestion du redimensionnement
+    window.addEventListener('resize', function() {
+        if (window.innerWidth < 768) {
+            calendar.changeView('listWeek');
+        } else {
+            calendar.changeView('dayGridMonth');
+        }
+    });
+
+    // Gestion du filtre par catégorie via le select
+    document.getElementById('filterCategory').addEventListener('change', function() {
+        const categorie = this.value;
+        filterByCategory(categorie);
+    });
+
+    // Gestion du bouton reset
+    document.getElementById('resetFilter').addEventListener('click', function() {
+        resetFilter();
+    });
+
+    // Sélectionner la catégorie active
+    if ('{{ categorie }}') {
+        document.getElementById('filterCategory').value = '{{ categorie }}';
+    }
+
+    calendar.render();
+});
+
+// Fonction pour filtrer par catégorie (appelée par le clic sur les cartes)
+function filterByCategory(categorie) {
+    const currentUrl = new URL(window.location);
+    
+    if (categorie && categorie !== '') {
+        currentUrl.searchParams.set('categorie', categorie);
+    } else {
+        currentUrl.searchParams.delete('categorie');
+    }
+    
+    window.location.href = currentUrl.toString();
+}
+
+// Fonction pour réinitialiser le filtre
+function resetFilter() {
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.delete('categorie');
+    window.location.href = currentUrl.toString();
+}
+
+function closeModal() {
+    document.getElementById('programmeModal').classList.add('hidden');
+}
+
+function getCategorieClasses(categorie) {
+    const classes = {
+        'culte': 'bg-purple-100 text-purple-800',
+        'reunion_priere': 'bg-green-100 text-green-800',
+        'etude_biblique': 'bg-yellow-100 text-yellow-800',
+        'evenement_special': 'bg-red-100 text-red-800',
+        'formation': 'bg-blue-100 text-blue-800',
+        'jeunesse': 'bg-pink-100 text-pink-800',
+        'enfants': 'bg-cyan-100 text-cyan-800'
+    };
+    return classes[categorie] || 'bg-gray-100 text-gray-800';
+}
+
+function getCategorieLabel(categorie) {
+    const labels = {
+        'culte': 'Culte',
+        'reunion_priere': 'Réunion de prière',
+        'etude_biblique': 'Étude biblique',
+        'evenement_special': 'Événement spécial',
+        'formation': 'Formation',
+        'jeunesse': 'Jeunesse',
+        'enfants': 'Enfants'
+    };
+    return labels[categorie] || categorie;
+}
+</script>
+{% endblock %}

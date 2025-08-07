@@ -113,6 +113,13 @@
                         {% endif %}
                     </div>
                 </div>
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Statut actif</label>
+                    <input type="checkbox" id="status" name="status"
+                        {% if form.status.value %}checked{% endif %}
+                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <span class="ml-2 text-sm text-gray-600">Cochez si le membre est actif</span>
+                </div>
                 
                 <!-- Boutons d'action -->
                 <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">

@@ -1,17 +1,19 @@
+import json
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Sum, Count, Q
+from django.urls import reverse
 from django.utils import timezone
 from django.core.paginator import Paginator
-from datetime import date
 import csv
 from django.http import HttpResponse
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,date
 from .models import *
 from django.db import transaction
+from django.utils.timezone import make_aware
 
 @login_required
 def membre_export_view(request):
@@ -108,6 +110,7 @@ def dashboard_view(request):
         date_debut__gte=timezone.now(),
         date_debut__lte=timezone.now() + timedelta(days=7)
     ).count()
+
     
     # Transactions du mois
     debut_mois = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -132,6 +135,15 @@ def dashboard_view(request):
     nouveaux_membres = Membre.objects.filter(
         date_adhesion__gte=timezone.now().date() - timedelta(days=30)
     ).order_by('-date_adhesion')[:5]
+
+    nouveaux_membres_2jrs = Membre.objects.filter(
+        created_at__gte=timezone.now()- timedelta(days=2)
+    ).order_by('-created_at')[:5]
+    
+    # Nouveau couple (30 derniers jours)
+    nouveaux_couples = Couple.objects.filter(
+        created_at__gte=timezone.now() - timedelta(days=30)
+    ).order_by('-created_at')[:5]
     
     context = {
         'total_membres': total_membres,
@@ -142,6 +154,8 @@ def dashboard_view(request):
         'solde_mois': offrandes_mois - depenses_mois,
         'programmes_a_venir': programmes_a_venir,
         'nouveaux_membres': nouveaux_membres,
+        'nouveaux_membres_2jrs': nouveaux_membres_2jrs,
+        'nouveaux_couples': nouveaux_couples
     }
     
     return render(request, 'core/index.html', context)
@@ -151,6 +165,10 @@ def membre_list_view(request):
     """Liste des membres avec recherche et filtres"""
     membres = Membre.objects.all().order_by('nom', 'prenom')
     
+    # Statistiques rapides
+    total_baptises = membres.filter(statut_baptismal='baptise_eglise').count()
+    total_non_baptises = membres.filter(statut_baptismal='non_baptise').count()
+    total_autre_eglise = membres.filter(statut_baptismal='baptise_autre_eglise').count()
     # Recherche
     search = request.GET.get('search')
     if search:
@@ -176,6 +194,9 @@ def membre_list_view(request):
         'search': search,
         'statut_baptismal': statut_baptismal,
         'statut_choices': Membre.STATUT_BAPTISMAL_CHOICES,
+        'total_baptises': total_baptises,
+        'total_non_baptises': total_non_baptises,
+        'total_autre_eglise': total_autre_eglise,
     }
     
     return render(request, 'membre/membre.html', context)
@@ -334,6 +355,7 @@ def membre_update_view(request, pk):
             date_adhesion = request.POST.get('date_adhesion')
             statut_baptismal = request.POST.get('statut_baptismal')
             sexe = request.POST.get('sexe')
+            is_active = request.POST.get('status') == 'on'
             
             # Mettre à jour les données du membre
             membre.nom = nom
@@ -345,6 +367,7 @@ def membre_update_view(request, pk):
             membre.date_adhesion = date_adhesion
             membre.statut_baptismal = statut_baptismal
             membre.sexe = sexe
+            membre.is_active = is_active
             
             try:
                 membre.save()
@@ -365,7 +388,8 @@ def membre_update_view(request, pk):
             'date_naissance': {'value': membre.date_naissance},
             'date_adhesion': {'value': membre.date_adhesion},
             'statut_baptismal': {'value': membre.statut_baptismal},
-            'sexe': {'value':membre.sexe}
+            'sexe': {'value':membre.sexe},
+            'status': {'value': membre.is_active},
         }
     }
     
@@ -392,6 +416,12 @@ def couple_list_view(request):
     """Liste des couples"""
     couples = Couple.objects.all().select_related('membre_mari', 'membre_femme').order_by('-date_mariage')
     
+     # Statistiques
+    total_maries = couples.filter(statut_couple='marie').count()
+    total_fiances = couples.filter(statut_couple='fiance').count()
+    debut_mois = timezone.now().replace(day=1)
+    mariages_ce_mois = couples.filter(date_mariage__gte=debut_mois).count()
+
     # Filtre par statut
     statut = request.GET.get('statut')
     if statut:
@@ -406,6 +436,10 @@ def couple_list_view(request):
         'page_obj': page_obj,
         'statut': statut,
         'statut_choices': Couple.STATUT_CHOICES,
+         # Statistiques
+        'total_maries': total_maries,
+        'total_fiances': total_fiances,
+        'mariages_ce_mois': mariages_ce_mois,
     }
     
     return render(request, 'couple/couples.html', context)
@@ -490,31 +524,61 @@ def couple_delete_view(request, pk):
                 couple.delete()
                 messages.success(request, "Le couple a été supprimé avec succès!")
                 return redirect('couple_list')
+        except ValidationError as e:
+            messages.error(request, str(e))
+            return redirect('couple_detail', pk=pk)
         except Exception as e:
             messages.error(request, f"Erreur lors de la suppression: {str(e)}")
             return redirect('couple_detail', pk=pk)
     
     return redirect('couple_detail', pk=pk)
 
+
+
+def combine_date_time(date_str, time_str):
+    """Combine date and time strings into a timezone-aware datetime.
+       If date is empty, use today's date."""
+    if not date_str or not time_str:
+        return None
+    dt_str = f"{date_str} {time_str}"
+    dt_obj = datetime.strptime(dt_str, "%Y-%m-%d %H:%M")
+    return make_aware(dt_obj)
+
 @login_required
 def programme_eglise_list_view(request):
     """Liste des programmes d'église"""
     programmes = ProgrammeEglise.objects.all().order_by('-date_debut')
-    
+    all_programmes = ProgrammeEglise.objects.all()
+
     # Filtres
     categorie = request.GET.get('categorie')
     if categorie:
-        programmes = programmes.filter(categorie=categorie)
+        all_programmes = all_programmes.filter(categorie=categorie)
     
     # Recherche
     search = request.GET.get('search')
     if search:
-        programmes = programmes.filter(
+        all_programmes = all_programmes.filter(
             Q(titre__icontains=search) |
             Q(description__icontains=search) |
             Q(lieu__icontains=search)
         )
-    
+    stats = {
+        'programmes': programmes,
+        'total': all_programmes.count(),
+        'culte': all_programmes.filter(categorie='culte').count(),
+        'reunion_priere': all_programmes.filter(categorie='reunion_priere').count(),
+        'etude_biblique': all_programmes.filter(categorie='etude_biblique').count(),
+        'evenement_special': all_programmes.filter(categorie='evenement_special').count(),
+        'formation': all_programmes.filter(categorie='formation').count(),
+        'jeunesse': all_programmes.filter(categorie='jeunesse').count(),
+        'enfants': all_programmes.filter(categorie='enfants').count(),
+    }
+
+    programmes = sorted(
+        all_programmes,
+        key=lambda p: p.next_date or timezone.make_aware(timezone.datetime.max)
+    )
     # Pagination
     paginator = Paginator(programmes, 10)
     page_number = request.GET.get('page')
@@ -525,6 +589,7 @@ def programme_eglise_list_view(request):
         'search': search,
         'categorie': categorie,
         'categorie_choices': ProgrammeEglise.CATEGORIE_CHOICES,
+        'stats':stats
     }
     
     return render(request, 'programmes/programme.html', context)
@@ -539,6 +604,138 @@ def programme_eglise_detail_view(request, pk):
     }
     
     return render(request, 'programmes/detail.html', context)
+
+@login_required
+def programme_eglise_create_view(request):
+    if request.method == 'POST':
+        
+        data = {
+            'titre': request.POST.get('titre'),
+            'description': request.POST.get('description'),
+            'date_debut': request.POST.get('date_debut') or None,
+            'heure_debut': request.POST.get('heure_debut') or None,
+            'date_fin': request.POST.get('date_fin') or None,
+            'heure_fin': request.POST.get('heure_fin') or None,
+            'lieu': request.POST.get('lieu'),
+            'categorie': request.POST.get('categorie'),
+            'recurrence': request.POST.get('recurrence')
+        }
+        programme = ProgrammeEglise.objects.create(**data)
+        messages.success(request, "Le programme a été créé avec succès!")
+        return redirect('programme_detail', pk=programme.pk)
+
+    return render(request, 'programmes/form.html', {
+        'categorie_choices': ProgrammeEglise.CATEGORIE_CHOICES,
+        'recurrence_choices': ProgrammeEglise.RECURRENCE_CHOICES,
+    })
+
+@login_required
+def programme_eglise_update_view(request, pk):
+    programme = get_object_or_404(ProgrammeEglise, pk=pk)
+
+    if request.method == 'POST':
+        try:
+            programme.titre = request.POST.get('titre')
+            programme.description = request.POST.get('description')
+            programme.date_debut = request.POST.get('date_debut'),
+            programme.heure_debut = request.POST.get('heure_debut')
+            programme.date_fin = request.POST.get('date_fin'),
+            programme.heure_fin = request.POST.get('heure_fin')
+            programme.lieu = request.POST.get('lieu')
+            programme.categorie = request.POST.get('categorie')
+            programme.recurrence = request.POST.get('recurrence')
+            programme.save()
+
+            messages.success(request, "Le programme a été modifié avec succès!")
+            return redirect('programme_detail', pk=programme.pk)
+        except Exception as e:
+            messages.error(request, f"Erreur lors de la modification: {str(e)}")
+
+    return render(request, 'programmes/form.html', {
+        'programme': programme,
+        'categorie_choices': ProgrammeEglise.CATEGORIE_CHOICES,
+        'recurrence_choices': ProgrammeEglise.RECURRENCE_CHOICES
+    })
+
+@login_required
+def programme_eglise_delete_view(request, pk):
+    """Supprimer un programme d'église"""
+    programme = get_object_or_404(ProgrammeEglise, pk=pk)
+    
+    if request.method == 'POST':
+        try:
+            programme.delete()
+            messages.success(request, "Le programme a été supprimé avec succès!")
+            return redirect('programme_list')
+        except Exception as e:
+            messages.error(request, f"Erreur lors de la suppression: {str(e)}")
+            return redirect('programme_detail', pk=pk)
+    
+    context = {
+        'programme': programme
+    }
+    
+    return render(request, 'programmes/delete_confirm.html', context)
+
+@login_required
+def programme_eglise_calendar_view(request):
+    """Vue calendrier des programmes"""
+    # Récupérer tous les programmes
+    programmes = ProgrammeEglise.objects.all()
+    
+    # Filtrer par catégorie si spécifiée
+    categorie = request.GET.get('categorie')
+    print(f"Catégorie reçue: {categorie}")  # Debug
+    
+    if categorie:
+        programmes = programmes.filter(categorie=categorie)
+        print(f"Nombre de programmes filtrés: {programmes.count()}")  # Debug
+    
+    # Statistiques par catégorie (toujours calculées sur tous les programmes)
+    all_programmes = ProgrammeEglise.objects.all()
+    stats = {
+        cat[0]: all_programmes.filter(categorie=cat[0]).count()
+        for cat in ProgrammeEglise.CATEGORIE_CHOICES
+    }
+    
+    # Convertir les programmes en événements pour le calendrier
+    events = []
+    for prog in programmes:
+        color = {
+            'culte': '#9333ea',  # purple-600
+            'reunion_priere': '#16a34a',  # green-600
+            'etude_biblique': '#ca8a04',  # yellow-600
+            'evenement_special': '#dc2626',  # red-600
+            'formation': '#2563eb',  # blue-600
+            'jeunesse': '#db2777',  # pink-600
+            'enfants': '#0891b2',  # cyan-600
+        }.get(prog.categorie, '#4b5563')
+        
+        events.append({
+            'id': prog.pk,
+            'title': prog.titre,
+            'start': prog.date_debut.isoformat() if prog.date_debut else None,
+            'end': prog.date_fin.isoformat() if prog.date_fin else None,
+            'backgroundColor': color,
+            'borderColor': color,
+            'url': reverse('programme_detail', args=[prog.pk]),
+            'extendedProps': {
+                'categorie': prog.categorie,
+                'lieu': prog.lieu or '',
+                'description': prog.description or '',
+                'editUrl': reverse('programme_update', args=[prog.pk])
+            }
+        })
+    
+    print(f"Nombre d'événements générés: {len(events)}")  # Debug
+    
+    context = {
+        'events': json.dumps(events),
+        'categorie_choices': ProgrammeEglise.CATEGORIE_CHOICES,
+        'categorie': categorie,
+        'stats': stats,
+    }
+    return render(request, 'programmes/calendar.html', context)
 
 @login_required
 def groupe_list_view(request):

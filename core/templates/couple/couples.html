@@ -31,7 +31,7 @@
                 </div>
                 <div>
                     <p class="text-gray-500 text-sm">Couples Mariés</p>
-                    <h3 class="text-2xl font-bold">{{ page_obj.object_list|length }}</h3>
+                    <h3 class="text-2xl font-bold">{{ total_maries }}</h3>
                 </div>
             </div>
         </div>
@@ -42,7 +42,7 @@
                 </div>
                 <div>
                     <p class="text-gray-500 text-sm">Couples Fiancés</p>
-                    <h3 class="text-2xl font-bold">{{ page_obj.object_list|length }}</h3>
+                    <h3 class="text-2xl font-bold">{{total_fiances }}</h3>
                 </div>
             </div>
         </div>
@@ -53,7 +53,7 @@
                 </div>
                 <div>
                     <p class="text-gray-500 text-sm">Mariages ce mois</p>
-                    <h3 class="text-2xl font-bold">3</h3>
+                    <h3 class="text-2xl font-bold">{{mariages_ce_mois}}</h3>
                 </div>
             </div>
         </div>
@@ -141,9 +141,9 @@
                                 <a href="#" class="text-green-600 hover:text-green-900">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <a href="#" class="text-red-600 hover:text-red-900">
+                                <button type="button" onclick="confirmDelete(event, '{% url 'couple_delete' couple.pk %}')" class="text-red-600 hover:text-red-900">
                                     <i class="fas fa-trash"></i>
-                                </a>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -158,6 +158,33 @@
                 </tbody>
             </table>
         </div>
+
+        <div id="deleteModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+                        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                            <div class="mt-3 text-center">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900">Confirmer la suppression</h3>
+                                <div class="mt-2 px-7 py-3">
+                                    <p class="text-sm text-gray-500">
+                                        Êtes-vous sûr de vouloir supprimer ce couple ? Cette action est irréversible.
+                                    </p>
+                                </div>
+                                <div class="flex justify-center mt-4 space-x-4">
+                                    <button onclick="hideDeleteModal()" 
+                                            class="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                                        Annuler
+                                    </button>
+                                    <form id="deleteForm" method="POST">
+                                        {% csrf_token %}
+                                        <button type="submit"
+                                                class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300">
+                                            Supprimer
+                                        </button>
+                                    </form>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
         <!-- Pagination -->
         {% if page_obj.has_other_pages %}
@@ -206,4 +233,18 @@
         {% endif %}
     </div>
 </main>
+
+<script>
+    let url = None
+    function confirmDelete(event, url) {
+        event.preventDefault();
+        document.getElementById('deleteForm').action = url;
+        document.getElementById('deleteModal').classList.remove('hidden');
+
+    }
+
+    function hideDeleteModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+    }
+</script>
 {% endblock body %}
